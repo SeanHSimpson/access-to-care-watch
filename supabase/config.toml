@@ -1,0 +1,3 @@
+[functions.submit-report]
+# Called by anonymous site visitors — there's no logged-in user to hold a JWT.
+verify_jwt = false
