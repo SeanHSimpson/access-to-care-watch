@@ -204,7 +204,10 @@ create table app.reports (
 -- A CHECK that references current_date would re-validate old rows on
 -- restore or update and start rejecting perfectly good history.
 create or replace function app.validate_report_dates()
-returns trigger language plpgsql as $$
+returns trigger
+language plpgsql
+set search_path = app, public
+as $$
 begin
   if new.date_requested > current_date + 1
      or coalesce(new.date_seen, current_date) > current_date + 1
