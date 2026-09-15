@@ -41,16 +41,16 @@ export function Layout() {
       <footer className="border-t border-slate-200 bg-white px-4 py-6 text-xs text-slate-500">
         <div className="mx-auto max-w-4xl space-y-1">
           <p>
-            TRICARE Access Watch is an independent, privately run project. It is{' '}
-            <strong>not affiliated with, endorsed by, or operated by</strong> the Department of
-            Defense, the Department of the Air Force, or any branch of the U.S. military.
+            TRICARE Access Watch is an independent, privately run project —{' '}
+            <strong>not affiliated with or endorsed by</strong> the Department of Defense or any
+            branch of the U.S. military.
           </p>
           <p>
             Reports are appointment-access data, not medical records — see{' '}
             <NavLink to="/methodology" className="underline">
               methodology
             </NavLink>
-            . Source available under the MIT license.
+            .
           </p>
         </div>
       </footer>
