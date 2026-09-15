@@ -37,6 +37,10 @@ export function DaysOverStandard({
   const standard = standards[careType]
   const daysOver = daysWaited - standard.maxDays
   const overStandard = daysOver > 0
+  const stillOpen = stillWaiting && !dateSeen && !dateFirstOffered
+  // dateSeen is always <= today (the date input enforces that); only a
+  // scheduled-but-not-yet-happened dateFirstOffered can land in the future.
+  const isFutureAppointment = !stillOpen && resolutionDate > todayIso()
 
   return (
     <div
@@ -45,8 +49,9 @@ export function DaysOverStandard({
       }`}
     >
       <p className="font-semibold">
-        {daysWaited} day{daysWaited === 1 ? '' : 's'} waited
-        {stillWaiting && !dateSeen && !dateFirstOffered ? ' (and counting)' : ''}
+        {isFutureAppointment
+          ? `Your appointment is scheduled ${daysWaited} day${daysWaited === 1 ? '' : 's'} after this clock starts`
+          : `${daysWaited} day${daysWaited === 1 ? '' : 's'} waited${stillOpen ? ' (and counting)' : ''}`}
       </p>
       <p>
         The standard for {CARE_TYPE_LABELS[careType]} is {standard.maxDays} day
@@ -54,7 +59,9 @@ export function DaysOverStandard({
       </p>
       <p className="font-semibold">
         {overStandard
-          ? `${daysOver} day${daysOver === 1 ? '' : 's'} over the standard.`
+          ? isFutureAppointment
+            ? `Already ${daysOver} day${daysOver === 1 ? '' : 's'} over the standard — before you're even seen.`
+            : `${daysOver} day${daysOver === 1 ? '' : 's'} over the standard.`
           : 'Within the standard.'}
       </p>
     </div>

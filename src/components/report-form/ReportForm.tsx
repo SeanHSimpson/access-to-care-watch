@@ -118,7 +118,7 @@ export function ReportForm() {
             referralApprovedDate={state.referralApprovedDate}
             dateFirstOffered={state.dateFirstOffered}
             dateSeen={state.dateSeen}
-            stillWaiting={state.stillWaiting}
+            dateStatus={state.dateStatus}
             update={update}
           />
         )}

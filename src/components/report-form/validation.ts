@@ -20,10 +20,12 @@ export function validateStep(step: number, s: ReportFormState): string[] {
       if (s.referralRequired && !s.referralApprovedDate) {
         errors.push('Enter the referral approval date, or uncheck "referral required."')
       }
-      if (!s.stillWaiting && !s.dateFirstOffered && !s.dateSeen) {
-        errors.push(
-          'Enter a date you were offered or seen, or check "I\'m still waiting."',
-        )
+      if (!s.dateStatus) {
+        errors.push('Select where this stands: still waiting, scheduled, or already happened.')
+      } else if (s.dateStatus === 'scheduled' && !s.dateFirstOffered) {
+        errors.push('Enter the date of your scheduled appointment.')
+      } else if (s.dateStatus === 'happened' && !s.dateFirstOffered && !s.dateSeen) {
+        errors.push('Enter a date you were offered or seen.')
       }
       break
     case 6:

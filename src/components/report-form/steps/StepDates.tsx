@@ -1,10 +1,27 @@
 import { Field } from '../../ui/Field'
+import { FieldGroup } from '../../ui/FieldGroup'
+import { RadioCards, type RadioOption } from '../../ui/RadioCards'
 import { TextInput } from '../../ui/TextInput'
-import { CheckboxRow } from '../../ui/CheckboxRow'
 import { DaysOverStandard } from '../DaysOverStandard'
 import { todayIso } from '../../../lib/standards'
 import type { CareType } from '../../../types/database'
-import type { StepUpdater } from '../types'
+import type { ReportFormState, StepUpdater } from '../types'
+
+// Schedules more than ~400 days out aren't realistic wait-time reports and
+// match the trigger's own future-date guard in supabase/schema.sql.
+const MAX_SCHEDULED_DAYS_OUT = 400
+
+type DateStatus = NonNullable<ReportFormState['dateStatus']>
+
+const STATUS_OPTIONS: RadioOption<DateStatus>[] = [
+  { value: 'waiting', label: "Still waiting", description: 'Nothing scheduled or offered yet.' },
+  {
+    value: 'scheduled',
+    label: 'Scheduled, not yet happened',
+    description: "You have a date, even if it's in the future.",
+  },
+  { value: 'happened', label: 'Already happened', description: 'You were offered and/or seen.' },
+]
 
 export function StepDates({
   careType,
@@ -13,7 +30,7 @@ export function StepDates({
   referralApprovedDate,
   dateFirstOffered,
   dateSeen,
-  stillWaiting,
+  dateStatus,
   update,
 }: {
   careType: CareType | null
@@ -22,20 +39,35 @@ export function StepDates({
   referralApprovedDate: string
   dateFirstOffered: string
   dateSeen: string
-  stillWaiting: boolean
+  dateStatus: ReportFormState['dateStatus']
   update: StepUpdater
 }) {
-  const max = todayIso()
+  const today = todayIso()
+  const scheduleMax = new Date(`${today}T00:00:00Z`)
+  scheduleMax.setUTCDate(scheduleMax.getUTCDate() + MAX_SCHEDULED_DAYS_OUT)
+  const scheduleMaxIso = scheduleMax.toISOString().slice(0, 10)
+
+  function setStatus(status: DateStatus) {
+    if (status === 'waiting') {
+      update({ dateStatus: status, dateFirstOffered: '', dateSeen: '' })
+    } else if (status === 'scheduled') {
+      update({ dateStatus: status, dateSeen: '' })
+    } else {
+      // A future date left over from 'scheduled' doesn't belong in a field
+      // capped at today — drop it rather than leave a stale/invalid value.
+      update({
+        dateStatus: status,
+        dateFirstOffered: dateFirstOffered && dateFirstOffered > today ? '' : dateFirstOffered,
+      })
+    }
+  }
 
   return (
     <div className="space-y-5">
-      <Field
-        label="Date you first requested/asked for this appointment"
-        required
-      >
+      <Field label="Date you first requested/asked for this appointment" required>
         <TextInput
           type="date"
-          max={max}
+          max={today}
           value={dateRequested}
           onChange={(e) => update({ dateRequested: e.target.value })}
         />
@@ -50,25 +82,34 @@ export function StepDates({
           <TextInput
             type="date"
             min={dateRequested || undefined}
-            max={max}
+            max={today}
             value={referralApprovedDate}
             onChange={(e) => update({ referralApprovedDate: e.target.value })}
           />
         </Field>
       )}
 
-      <CheckboxRow
-        label="I'm still waiting — no appointment has happened yet"
-        checked={stillWaiting}
-        onChange={(checked) =>
-          update({
-            stillWaiting: checked,
-            ...(checked ? { dateFirstOffered: '', dateSeen: '' } : {}),
-          })
-        }
-      />
+      <FieldGroup label="Where does this stand?" required>
+        <RadioCards name="dateStatus" options={STATUS_OPTIONS} value={dateStatus} onChange={setStatus} />
+      </FieldGroup>
 
-      {!stillWaiting && (
+      {dateStatus === 'scheduled' && (
+        <Field
+          label="Date of your scheduled appointment"
+          hint="This can be a future date — if it's already past the standard, that's exactly what this site is for."
+          required
+        >
+          <TextInput
+            type="date"
+            min={dateRequested || undefined}
+            max={scheduleMaxIso}
+            value={dateFirstOffered}
+            onChange={(e) => update({ dateFirstOffered: e.target.value })}
+          />
+        </Field>
+      )}
+
+      {dateStatus === 'happened' && (
         <>
           <Field
             label="Date you were first offered an appointment"
@@ -77,7 +118,7 @@ export function StepDates({
             <TextInput
               type="date"
               min={dateRequested || undefined}
-              max={max}
+              max={today}
               value={dateFirstOffered}
               onChange={(e) => update({ dateFirstOffered: e.target.value })}
             />
@@ -86,7 +127,7 @@ export function StepDates({
             <TextInput
               type="date"
               min={dateRequested || undefined}
-              max={max}
+              max={today}
               value={dateSeen}
               onChange={(e) => update({ dateSeen: e.target.value })}
             />
@@ -100,7 +141,7 @@ export function StepDates({
         referralApprovedDate={referralApprovedDate}
         dateFirstOffered={dateFirstOffered}
         dateSeen={dateSeen}
-        stillWaiting={stillWaiting}
+        stillWaiting={dateStatus === 'waiting'}
       />
     </div>
   )

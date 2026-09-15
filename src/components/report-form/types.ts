@@ -24,7 +24,16 @@ export interface ReportFormState {
   referralApprovedDate: string
   dateFirstOffered: string
   dateSeen: string
-  stillWaiting: boolean
+  /**
+   * 'waiting': nothing scheduled/offered yet.
+   * 'scheduled': an appointment date has been given but hasn't happened yet —
+   *   dateFirstOffered may be in the future. If that scheduled date is
+   *   already past the standard, the live calculator documents that before
+   *   the appointment even happens.
+   * 'happened': already offered and/or seen (dateFirstOffered/dateSeen are
+   *   both in the past).
+   */
+  dateStatus: 'waiting' | 'scheduled' | 'happened' | null
 
   // Step 5: consequences
   toldToUseUrgentCare: boolean
@@ -61,7 +70,7 @@ export const initialFormState: ReportFormState = {
   referralApprovedDate: '',
   dateFirstOffered: '',
   dateSeen: '',
-  stillWaiting: false,
+  dateStatus: null,
   toldToUseUrgentCare: false,
   toldToUseEr: false,
   soughtCareOffBase: false,
